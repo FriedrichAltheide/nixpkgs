@@ -1,4 +1,4 @@
-{ config, stdenv, fetchurl, lib, acpica-tools, dev86, pam, libxslt, libxml2, wrapQtAppsHook
+{ config, stdenv, fetchurl, lib, callPackage, acpica-tools, dev86, pam, libxslt, libxml2, wrapQtAppsHook
 , libX11, xorgproto, libXext, libXcursor, libXmu, libIDL, SDL2, libcap, libGL, libGLU
 , libpng, glib, lvm2, libXrandr, libXinerama, libopus, qtbase, qtx11extras
 , qttools, qtsvg, qtwayland, pkg-config, which, docbook_xsl, docbook_xml_dtd_43
@@ -26,6 +26,8 @@ let
   # Use maintainers/scripts/update.nix to update the version and all related hashes or
   # change the hashes in extpack.nix and guest-additions/default.nix as well manually.
   version = "7.0.12";
+
+  virtualboxGuestAdditionsIso = callPackage guest-additions-iso/default.nix { };
 in stdenv.mkDerivation {
   pname = "virtualbox";
   inherit version;
@@ -216,7 +218,7 @@ in stdenv.mkDerivation {
 
     mkdir -p "$out/share/virtualbox"
     cp -rv src/VBox/Main/UnattendedTemplates "$out/share/virtualbox"
-    ln -s "${linuxPackages.virtualboxGuestAdditions.src}" "$out/share/virtualbox/VBoxGuestAdditions.iso"
+    ln -s "${virtualboxGuestAdditionsIso}/VBoxGuestAdditions_${version}.iso" "$out/share/virtualbox/VBoxGuestAdditions.iso"
   '';
 
   preFixup = optionalString (!headless) ''
@@ -229,7 +231,6 @@ in stdenv.mkDerivation {
   '';
 
   passthru = {
-    inherit version;       # for guest additions
     inherit extensionPack; # for inclusion in profile to prevent gc
     updateScript = ./update.sh;
   };
