@@ -36303,6 +36303,8 @@ with pkgs;
 
   virtualboxExtpack = callPackage ../applications/virtualization/virtualbox/extpack.nix { };
 
+  virtualboxGuestAdditionsIso = pkgs.callPackage ../applications/virtualization/virtualbox/guest-additions-iso/default.nix { };
+
   virtualboxWithExtpack = lowPrio (virtualbox.override {
     extensionPack = virtualboxExtpack;
   });

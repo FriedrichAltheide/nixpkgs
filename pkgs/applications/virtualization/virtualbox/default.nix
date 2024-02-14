@@ -3,7 +3,7 @@
 , libpng, glib, lvm2, libXrandr, libXinerama, libopus, qtbase, qtx11extras
 , qttools, qtsvg, qtwayland, pkg-config, which, docbook_xsl, docbook_xml_dtd_43
 , alsa-lib, curl, libvpx, nettools, dbus, substituteAll, gsoap, zlib
-, yasm, glslang
+, yasm, glslang, virtualboxGuestAdditionsIso
 , linuxPackages
 # If open-watcom-bin is not passed, VirtualBox will fall back to use
 # the shipped alternative sources (assembly).
@@ -24,7 +24,7 @@ with lib;
 let
   buildType = "release";
   # Use maintainers/scripts/update.nix to update the version and all related hashes or
-  # change the hashes in extpack.nix and guest-additions/default.nix as well manually.
+  # change the hashes in extpack.nix and guest-additions-iso/default.nix as well manually.
   version = "7.0.12";
 in stdenv.mkDerivation {
   pname = "virtualbox";
@@ -216,7 +216,7 @@ in stdenv.mkDerivation {
 
     mkdir -p "$out/share/virtualbox"
     cp -rv src/VBox/Main/UnattendedTemplates "$out/share/virtualbox"
-    ln -s "${linuxPackages.virtualboxGuestAdditions.src}" "$out/share/virtualbox/VBoxGuestAdditions.iso"
+    ln -s "${virtualboxGuestAdditionsIso}/VBoxGuestAdditions_${version}.iso" "$out/share/virtualbox/VBoxGuestAdditions.iso"
   '';
 
   preFixup = optionalString (!headless) ''
@@ -229,7 +229,6 @@ in stdenv.mkDerivation {
   '';
 
   passthru = {
-    inherit version;       # for guest additions
     inherit extensionPack; # for inclusion in profile to prevent gc
     updateScript = ./update.sh;
   };
