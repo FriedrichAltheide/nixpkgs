@@ -93,15 +93,10 @@ in
       serviceConfig = {
         ExecStart = pkgs.writeShellScript "virtualboxGuestAdditions-wrapper" ''
           ${kernel.virtualboxGuestAdditions}/bin/VBoxClient --vmsvga-session &
-          mkIf cfg.clipboard {
-            ${kernel.virtualboxGuestAdditions}/bin/VBoxClient --clipboard &
-          }
-          mkIf cfg.seamless {
-            ${kernel.virtualboxGuestAdditions}/bin/VBoxClient --seamless &
-          }
-          mkIf cfg.draganddrop {
-            ${kernel.virtualboxGuestAdditions}/bin/VBoxClient --draganddrop &
-          }
+
+          ${optionalString (cfg.clipboard) "${kernel.virtualboxGuestAdditions}/bin/VBoxClient --clipboard &"}
+          ${optionalString (cfg.seamless) "${kernel.virtualboxGuestAdditions}/bin/VBoxClient --seamless &"}
+          ${optionalString (cfg.draganddrop) "${kernel.virtualboxGuestAdditions}/bin/VBoxClient --draganddrop &"}
         '';
         # Wait after a failure, hoping that the display environment is ready after waiting
         RestartSec = 2;
