@@ -55,14 +55,6 @@ in stdenv.mkDerivation (finalAttrs: {
             xorg.libX11 xorg.libXt xorg.libXext xorg.libXmu xorg.libXfixes xorg.libXcursor ]} $i
       done
 
-      # FIXME: Virtualbox 4.3.22 moved VBoxClient-all (required by Guest Additions
-      # NixOS module) to 98vboxadd-xclient. For now, just work around it:
-      mv other/98vboxadd-xclient bin/VBoxClient-all
-
-      # Remove references to /usr from various scripts and files
-      sed -i -e "s|/usr/bin|$out/bin|" other/vboxclient.desktop
-      sed -i -e "s|/usr/bin|$out/bin|" bin/VBoxClient-all
-
       runHook postBuild
     '';
 
@@ -81,11 +73,8 @@ in stdenv.mkDerivation (finalAttrs: {
       mkdir -p $out/bin
       install -m 755 bin/VBoxClient $out/bin
       install -m 755 bin/VBoxControl $out/bin
-      install -m 755 bin/VBoxClient-all $out/bin
       install -m 755 bin/VBoxDRMClient $out/bin
 
-      wrapProgram $out/bin/VBoxClient-all \
-              --prefix PATH : "${which}/bin"
 
       # Don't install VBoxOGL for now
       # It seems to be broken upstream too, and fixing it is far down the priority list:

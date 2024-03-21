@@ -75,7 +75,7 @@ in
         # Allow systemd dependencies on vboxguest.
         SUBSYSTEM=="misc", KERNEL=="vboxguest", TAG+="systemd"
       '';
-    }
+
     systemd.user.services.virtualboxClient = {
       description = "VirtualBox Guest User Services";
 
@@ -108,5 +108,5 @@ in
         Restart = "always";
       };
     };
-  ]);
+  }]);
 }
