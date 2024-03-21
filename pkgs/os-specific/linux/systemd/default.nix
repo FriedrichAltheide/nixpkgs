@@ -223,6 +223,11 @@ stdenv.mkDerivation (finalAttrs: {
     ./0015-tpm2_context_init-fix-driver-name-checking.patch
     ./0016-systemctl-edit-suggest-systemdctl-edit-runtime-on-sy.patch
     ./0017-meson.build-do-not-create-systemdstatedir.patch
+    # https://github.com/systemd/systemd/pull/31871
+    (fetchpatch {
+      url = "https://patch-diff.githubusercontent.com/raw/systemd/systemd/pull/31871.patch";
+      sha256 = "r3jdQeuyAsDU/oz63NeUWXVYTIz1tucHEAdAkvl60PU=";
+    })
   ] ++ lib.optional (stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isGnu) [
     ./0018-timesyncd-disable-NSCD-when-DNSSEC-validation-is-dis.patch
   ] ++ lib.optional (stdenv.hostPlatform.isPower || stdenv.hostPlatform.isRiscV) [
@@ -232,11 +237,6 @@ stdenv.mkDerivation (finalAttrs: {
     # https://github.com/NixOS/nixpkgs/pull/282607
     (fetchpatch {
       url = "https://github.com/systemd/systemd/commit/8040fa55a1cbc34dede3205a902095ecd26c21e3.patch";
-      sha256 = "0c6z7bsndbkb8m130jnjpsl138sfv3q171726n5vkyl2n9ihnavk";
-    })
-    # https://github.com/systemd/systemd/pull/31871
-    (fetchpatch {
-      url = "https://patch-diff.githubusercontent.com/raw/systemd/systemd/pull/31871.patch";
       sha256 = "0c6z7bsndbkb8m130jnjpsl138sfv3q171726n5vkyl2n9ihnavk";
     })
   ] ++ lib.optional stdenv.hostPlatform.isMusl (
