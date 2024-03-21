@@ -36,8 +36,12 @@ in stdenv.mkDerivation (finalAttrs: {
 
   patches = [
     ../gcc-13.patch
+    # https://www.virtualbox.org/changeset/100258/vbox
     ./no-legacy-xorg.patch
-    ./strlcpy.patch
+    # https://www.virtualbox.org/changeset/102989/vbox
+    ./strlcpy-1.patch
+    # https://www.virtualbox.org/changeset/102990/vbox
+    ./strlcpy-2.patch
   ];
 
   postPatch = ''
@@ -48,11 +52,7 @@ in stdenv.mkDerivation (finalAttrs: {
     ls kBuild/bin/linux.x86/k* tools/linux.x86/bin/* | xargs -n 1 patchelf --set-interpreter ${stdenv.cc.libc}/lib/ld-linux.so.2
     ls kBuild/bin/linux.amd64/k* tools/linux.amd64/bin/* | xargs -n 1 patchelf --set-interpreter ${stdenv.cc.libc}/lib/ld-linux-x86-64.so.2
 
-    grep 'libdbus-1\.so\.3'     src include -rI --files-with-match | xargs sed -i -e '
-      s@"libdbus-1\.so\.3"@"${dbus.lib}/lib/libdbus-1.so.3"@g'
-
-    grep 'libasound\.so\.2'     src include -rI --files-with-match | xargs sed -i -e '
-      s@"libasound\.so\.2"@"${alsa-lib.out}/lib/libasound.so.2"@g'
+    substituteInPlace ./include/VBox/dbus-calls.h --replace-fail libdbus-1.so.3 ${dbus.lib}/lib/libdbus-1.so.3
 
     substituteInPlace ./src/VBox/Additions/common/VBoxGuest/lib/VBoxGuestR3LibDrmClient.cpp --replace-fail /usr/bin/VBoxDRMClient /run/current-system/sw/bin/VBoxDRMClient
     substituteInPlace ./src/VBox/Additions/common/VBoxGuest/lib/VBoxGuestR3LibDrmClient.cpp --replace-fail /usr/bin/VBoxClient /run/current-system/sw/bin/VBoxClient

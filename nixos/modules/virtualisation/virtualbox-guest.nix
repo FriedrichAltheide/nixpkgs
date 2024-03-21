@@ -5,36 +5,10 @@
 with lib;
 
 let
-
   cfg = config.virtualisation.virtualbox.guest;
   kernel = config.boot.kernelPackages;
-
-  mkVirtualBoxUserService = serviceArgs: {
-    description = "VirtualBox Guest User Services ${serviceArgs}";
-
-    wantedBy = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-
-    # The graphical session may not be ready when starting the service
-    # Hence, check if the DISPLAY env var is set, otherwise fail, wait and retry again
-    startLimitBurst = 20;
-
-    unitConfig.ConditionVirtualization = cfg.conditionVirtualization;
-
-    # Check if the display environment is ready, otherwise fail
-    preStart = "${pkgs.bash}/bin/bash -c \"if [ -z $DISPLAY ]; then exit 1; fi\"";
-    serviceConfig = {
-      ExecStart = "@${kernel.virtualboxGuestAdditions}/bin/VBoxClient --foreground ${serviceArgs}";
-      # Wait after a failure, hoping that the display environment is ready after waiting
-      RestartSec = 2;
-      Restart = "always";
-    };
-  };
-
 in
-
 {
-
   ###### interface
 
   options.virtualisation.virtualbox.guest = {
@@ -44,37 +18,22 @@ in
       description = lib.mdDoc "Whether to enable the VirtualBox service and other guest additions.";
     };
 
-    x11 = mkOption {
-      default = true;
-      type = types.bool;
-      description = lib.mdDoc "Whether to enable x11 graphics";
-    };
-
-    conditionVirtualization = mkOption {
-      default = "oracle";
-      type = types.str;
-      description = lib.mdDoc ''
-        The virtualized environment in which the guest additions should be started.
-        E.g., "oracle" or "kvm"
-      '';
-    };
-
     clipboard = mkOption {
       default = true;
       type = types.bool;
-      description = lib.mdDoc "Whether to enable clipboard support";
+      description = lib.mdDoc "Whether to enable clipboard support.";
     };
 
     seamless = mkOption {
       default = true;
       type = types.bool;
-      description = lib.mdDoc "Whether to enable seamless support";
+      description = lib.mdDoc "Whether to enable seamless mode. When activated windows from the guest appear next to the windows of the host.";
     };
 
-    vmsvga = mkOption {
+    draganddrop = mkOption {
       default = true;
       type = types.bool;
-      description = lib.mdDoc "Whether to enable vmsvga support";
+      description = lib.mdDoc "Whether to enable drag and drop support.";
     };
   };
 
@@ -102,7 +61,7 @@ in
       requires = [ "dev-vboxguest.device" ];
       after = [ "dev-vboxguest.device" ];
 
-      unitConfig.ConditionVirtualization = cfg.conditionVirtualization;
+      unitConfig.ConditionVirtualization = "oracle";
 
       serviceConfig.ExecStart = "@${kernel.virtualboxGuestAdditions}/bin/VBoxService VBoxService --foreground";
     };
@@ -116,39 +75,38 @@ in
         # Allow systemd dependencies on vboxguest.
         SUBSYSTEM=="misc", KERNEL=="vboxguest", TAG+="systemd"
       '';
-  }
-    (
-      mkIf cfg.clipboard {
-        systemd.user.services.virtualboxClientClipboard = mkVirtualBoxUserService "--clipboard";
-      }
-    )
-    (
-      mkIf cfg.seamless {
-        systemd.user.services.virtualboxClientSeamless = mkVirtualBoxUserService "--seamless";
-      }
-    )
-    (
-      mkIf cfg.vmsvga {
-        systemd.user.services.virtualboxClientVmsvga = mkVirtualBoxUserService "--vmsvga-session";
-      }
-    )
-    (
-      mkIf cfg.x11 {
-        services.xserver.videoDrivers = [ "vmware" "virtualbox" "modesetting" ];
+    }
+    systemd.user.services.virtualboxClient = {
+      description = "VirtualBox Guest User Services";
 
-        services.xserver.config =
-          ''
-            Section "InputDevice"
-              Identifier "VBoxMouse"
-              Driver "vboxmouse"
-            EndSection
-          '';
+      wantedBy = [ "graphical-session.target" ];
+      partOf = [ "graphical-session.target" ];
 
-        services.xserver.serverLayoutSection =
-          ''
-            InputDevice "VBoxMouse"
-          '';
-      }
-    )]);
+      # The graphical session may not be ready when starting the service
+      # Hence, check if the DISPLAY env var is set, otherwise fail, wait and retry again
+      startLimitBurst = 20;
 
+      unitConfig.ConditionVirtualization = "oracle";
+
+      # Check if the display environment is ready, otherwise fail triggering a restart of the service
+      preStart = "${pkgs.bash}/bin/bash -c \"if [ -z $DISPLAY ]; then exit 1; fi\"";
+      serviceConfig = {
+        ExecStart = pkgs.writeShellScript "virtualboxGuestAdditions-wrapper" ''
+          ${kernel.virtualboxGuestAdditions}/bin/VBoxClient --vmsvga-session &
+          mkIf cfg.clipboard {
+            ${kernel.virtualboxGuestAdditions}/bin/VBoxClient --clipboard &
+          }
+          mkIf cfg.seamless {
+            ${kernel.virtualboxGuestAdditions}/bin/VBoxClient --seamless &
+          }
+          mkIf cfg.draganddrop {
+            ${kernel.virtualboxGuestAdditions}/bin/VBoxClient --draganddrop &
+          }
+        '';
+        # Wait after a failure, hoping that the display environment is ready after waiting
+        RestartSec = 2;
+        Restart = "always";
+      };
+    };
+  ]);
 }

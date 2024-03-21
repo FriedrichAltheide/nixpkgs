@@ -13,6 +13,7 @@ stdenv.mkDerivation rec {
   };
 
   dontUnpack = true;
+  dontBuild = true;
 
   installPhase = ''
     mkdir -p $out
