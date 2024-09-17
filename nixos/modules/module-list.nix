@@ -160,6 +160,7 @@
   ./programs/bcc.nix
   ./programs/benchexec.nix
   ./programs/browserpass.nix
+  ./programs/calamares-nixos-extensions.nix
   ./programs/calls.nix
   ./programs/captive-browser.nix
   ./programs/ccache.nix
