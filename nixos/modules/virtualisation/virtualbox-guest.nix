@@ -95,6 +95,12 @@ in
       type = lib.types.bool;
       description = "Whether to load vboxsf";
     };
+
+    prefer3rdPartyKernelModule = lib.mkOption {
+      default = true;
+      type = lib.types.bool;
+      description = "Whether to prefer the 3rd party kernel module instead of the one shipped with the kernel.";
+    };
   };
 
   ###### implementation
@@ -111,7 +117,7 @@ in
 
         environment.systemPackages = [ kernel.virtualboxGuestAdditions ];
 
-        boot = {
+        boot = lib.mkIf cfg.prefer3rdPartyKernelModule {
           extraModulePackages = [ kernel.virtualboxGuestAdditions.kernelModules ];
           depmod.overrides = [
             {
@@ -146,17 +152,20 @@ in
         systemd.user.services.virtualboxClientVmsvga = mkVirtualBoxUserService "--vmsvga-session" cfg.verbose;
       }
       (lib.mkIf cfg.vboxsf {
-        boot = {
-          supportedFilesystems = [ "vboxsf" ];
-          initrd.supportedFilesystems = [ "vboxsf" ];
-          depmod.overrides = [
-            {
-              moduleName = "vboxsf";
+        boot =
+          {
+            supportedFilesystems = [ "vboxsf" ];
+            initrd.supportedFilesystems = [ "vboxsf" ];
+          }
+          // lib.attrsets.optionalAttrs cfg.prefer3rdPartyKernelModule {
+            depmod.overrides = [
+              {
+                moduleName = "vboxsf";
                 modulePackage = kernel.virtualboxGuestAdditions.kernelModules;
                 modulePath = "misc";
-            }
-          ];
-        };
+              }
+            ];
+          };
 
         users.groups.vboxsf.gid = config.ids.gids.vboxsf;
       })
