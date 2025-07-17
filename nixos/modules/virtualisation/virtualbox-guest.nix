@@ -111,7 +111,16 @@ in
 
         environment.systemPackages = [ kernel.virtualboxGuestAdditions ];
 
-        boot.extraModulePackages = [ kernel.virtualboxGuestAdditions ];
+        boot = {
+          extraModulePackages = [ kernel.virtualboxGuestAdditions.kernelModules ];
+          depmod.overrides = [
+            {
+              moduleName = "vboxguest";
+              modulePackage = kernel.virtualboxGuestAdditions.kernelModules;
+              modulePath = "misc";
+            }
+          ];
+        };
 
         systemd.services.virtualbox = {
           description = "VirtualBox Guest Services";
@@ -137,8 +146,17 @@ in
         systemd.user.services.virtualboxClientVmsvga = mkVirtualBoxUserService "--vmsvga-session" cfg.verbose;
       }
       (lib.mkIf cfg.vboxsf {
-        boot.supportedFilesystems = [ "vboxsf" ];
-        boot.initrd.supportedFilesystems = [ "vboxsf" ];
+        boot = {
+          supportedFilesystems = [ "vboxsf" ];
+          initrd.supportedFilesystems = [ "vboxsf" ];
+          depmod.overrides = [
+            {
+              moduleName = "vboxsf";
+                modulePackage = kernel.virtualboxGuestAdditions.kernelModules;
+                modulePath = "misc";
+            }
+          ];
+        };
 
         users.groups.vboxsf.gid = config.ids.gids.vboxsf;
       })

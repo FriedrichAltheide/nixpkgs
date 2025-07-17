@@ -59,6 +59,11 @@ stdenv.mkDerivation {
   }.tar.bz2";
   sourceRoot = ".";
 
+  outputs = [
+    "out"
+    "kernelModules"
+  ];
+
   KERN_DIR = "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build";
   KERN_INCL = "${kernel.dev}/lib/modules/${kernel.modDirVersion}/source/include";
 
@@ -109,7 +114,7 @@ stdenv.mkDerivation {
 
     # Install kernel modules.
     cd src/vboxguest-${virtualboxVersion}_NixOS
-    make install INSTALL_MOD_PATH=$out KBUILD_EXTRA_SYMBOLS=$PWD/vboxsf/Module.symvers
+    make install INSTALL_MOD_PATH=$kernelModules KBUILD_EXTRA_SYMBOLS=$PWD/vboxsf/Module.symvers
     cd ../..
 
     # Install binaries
